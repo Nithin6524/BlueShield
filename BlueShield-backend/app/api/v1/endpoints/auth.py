@@ -106,6 +106,14 @@ async def get_current_user_profile(current_user: User = Depends(get_current_user
         updated_at=current_user.updated_at
     )
 
+@router.post("/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    """Logout user (client-side token removal)"""
+    # In JWT-based auth, logout is typically handled client-side
+    # by removing the token from storage. The server doesn't need
+    # to do anything special since JWT tokens are stateless.
+    return {"message": "Logged out successfully"}
+
 @router.post("/change-password")
 async def change_password(
     password_data: PasswordChange,

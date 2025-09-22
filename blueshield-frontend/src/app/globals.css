@@ -1,0 +1,158 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  /* Ocean Theme Colors */
+  --ocean-deep: #0f172a;
+  --ocean-primary: #1e40af;
+  --ocean-secondary: #0891b2;
+  --ocean-accent: #06b6d4;
+  --ocean-light: #67e8f9;
+  --ocean-surface: #f0f9ff;
+  
+  /* Marine Life Colors */
+  --coral: #f97316;
+  --seafoam: #14b8a6;
+  --kelp: #16a34a;
+  
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-light: #64748b;
+  
+  /* Background */
+  --background: #ffffff;
+  --foreground: var(--text-primary);
+}
+
+@theme inline {
+  --color-ocean-deep: var(--ocean-deep);
+  --color-ocean-primary: var(--ocean-primary);
+  --color-ocean-secondary: var(--ocean-secondary);
+  --color-ocean-accent: var(--ocean-accent);
+  --color-ocean-light: var(--ocean-light);
+  --color-ocean-surface: var(--ocean-surface);
+  --color-coral: var(--coral);
+  --color-seafoam: var(--seafoam);
+  --color-kelp: var(--kelp);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-light: var(--text-light);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--ocean-deep);
+    --foreground: #f8fafc;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Wave Animation Keyframes */
+@keyframes wave-move-1 {
+  0% { transform: translateX(-100px) translateY(0px) rotate(0deg); }
+  50% { transform: translateX(-50px) translateY(-10px) rotate(1deg); }
+  100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+}
+
+@keyframes wave-move-2 {
+  0% { transform: translateX(-100px) translateY(0px) rotate(0deg); }
+  50% { transform: translateX(-30px) translateY(-15px) rotate(-1deg); }
+  100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+}
+
+@keyframes wave-move-3 {
+  0% { transform: translateX(-100px) translateY(0px) rotate(0deg); }
+  50% { transform: translateX(-70px) translateY(-5px) rotate(0.5deg); }
+  100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes drift {
+  0% { transform: translateX(0px) translateY(0px); }
+  33% { transform: translateX(30px) translateY(-10px); }
+  66% { transform: translateX(-20px) translateY(5px); }
+  100% { transform: translateX(0px) translateY(0px); }
+}
+
+/* Wave Classes */
+.wave-1 {
+  animation: wave-move-1 8s ease-in-out infinite;
+}
+
+.wave-2 {
+  animation: wave-move-2 10s ease-in-out infinite;
+}
+
+.wave-3 {
+  animation: wave-move-3 12s ease-in-out infinite;
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.drift {
+  animation: drift 15s ease-in-out infinite;
+}
+
+/* Parallax Container */
+.parallax-container {
+  perspective: 1px;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.parallax-element {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.parallax-back {
+  transform: translateZ(-2px) scale(3);
+}
+
+.parallax-base {
+  transform: translateZ(0);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ocean-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ocean-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ocean-primary);
+}
