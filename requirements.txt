@@ -1,0 +1,47 @@
+# Core Framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database
+motor
+pymongo[srv]
+beanie
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+bcrypt
+
+# Environment
+python-dotenv
+
+# HTTP & Validation
+httpx
+email-validator
+
+# Development
+pytest
+pytest-asyncio
+black
+isort
+
+# Future ML Dependencies
+numpy
+pandas
+scikit-learn
+tensorflow
+qdrant-client
+matplotlib
+seaborn
+jupyter
+ipykernel
+statsmodels
+
+# Additional Dependencies
+python-dateutil
+geopy
+
+litellm
