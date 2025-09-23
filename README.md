@@ -13,12 +13,12 @@ BlueShield is a comprehensive marine environmental monitoring system that addres
 
 ### Key Features
 
-- ** Interactive Ocean Mapping**: Real-time microplastic concentration predictions using interactive maps
-- ** AI-Powered Risk Assessment**: Personalized health risk evaluation through intelligent chatbot
-- ** Advanced Analytics**: LSTM-based time-series forecasting with satellite data integration
-- ** Secure User Management**: JWT-based authentication with personalized data tracking
-- ** Geospatial Hotspot Detection**: Identify high-risk pollution zones using clustering algorithms
-- ** Responsive Design**: Modern, accessible web interface built with Next.js and Tailwind CSS
+- **Interactive Ocean Mapping**: Real-time microplastic concentration predictions using interactive maps
+- **AI-Powered Risk Assessment**: Personalized health risk evaluation through intelligent chatbot
+- **Advanced Analytics**: LSTM-based time-series forecasting with satellite data integration
+- **Secure User Management**: JWT-based authentication with personalized data tracking
+- **Geospatial Hotspot Detection**: Identify high-risk pollution zones using clustering algorithms
+- **Responsive Design**: Modern, accessible web interface built with Next.js and Tailwind CSS
 
 ##  Problem Statement
 
@@ -196,16 +196,16 @@ BlueShield contributes to environmental protection by:
 ## 🔮 Future Enhancements
 
 ### Planned Features
-- ** Global Coverage**: Expand beyond Bay of Bengal to global oceans
-- ** Advanced AI**: Integration with more sophisticated language models
-- ** Research Tools**: Advanced analytics for researchers
-- ** Public Dashboard**: Open data platform for public access
+- **Global Coverage**: Expand beyond Bay of Bengal to global oceans
+- **Advanced AI**: Integration with more sophisticated language models
+- **Research Tools**: Advanced analytics for researchers
+- **Public Dashboard**: Open data platform for public access
 
 ### Technical Improvements
-- ** Performance**: On-device ML inference for faster predictions
-- ** Security**: Enhanced data encryption and privacy protection
-- ** Scalability**: Microservices architecture for better scaling
-- ** API**: Public API for third-party integrations
+- **Performance**: On-device ML inference for faster predictions
+- **Security**: Enhanced data encryption and privacy protection
+- **Scalability**: Microservices architecture for better scaling
+- **API**: Public API for third-party integrations
 
 ##  Contributing
 
