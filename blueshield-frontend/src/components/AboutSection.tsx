@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/Button';
 import RealOceanMap from '@/components/RealOceanMap';
 import { ABOUT_CONTENT, OCEAN_POLLUTION_DATA, HEALTH_IMPACT_STATS } from '@/constants/data';
 

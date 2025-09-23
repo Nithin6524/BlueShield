@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/Button';
 import StatisticsCard from '@/components/StatisticsCard';
 import { HERO_CONTENT, MARINE_IMPACT_STATS } from '@/constants/data';
 

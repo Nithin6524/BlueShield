@@ -18,10 +18,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   useEffect(() => {
     // If not loading and not authenticated, show auth modal
     if (!isLoading && !isAuthenticated) {
+      console.log('Showing auth modal', showAuthModal);
       setShowAuthModal(true);
       openAuthModal();
     }
-  }, [isAuthenticated, isLoading, openAuthModal]);
+  }, [isAuthenticated, isLoading, openAuthModal, showAuthModal]);
 
   // Show loading state while checking authentication
   if (isLoading) {

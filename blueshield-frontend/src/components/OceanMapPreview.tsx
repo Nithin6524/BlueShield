@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface MapPoint {
@@ -135,7 +135,7 @@ const OceanMapPreview: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-3 text-xs text-text-light">
-                  Click "Explore Full Map" to see detailed predictions for this region
+                  Click &quot;Explore Full Map&quot; to see detailed predictions for this region
                 </div>
               </div>
             ) : null;

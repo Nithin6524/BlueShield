@@ -5,6 +5,15 @@ import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { predictionService, PredictionResponse } from '@/services/predictionService';
 import { useAuth } from '@/contexts/AuthContext';
+import type { LeafletMouseEvent, Marker as LeafletMarker } from 'leaflet';
+
+// Extend window interface for map click handler
+declare global {
+  interface Window {
+    mapClickHandler?: (e: LeafletMouseEvent) => void;
+  }
+}
+
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { 
@@ -20,7 +29,6 @@ const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapCo
 });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 
 // Use the imported type from predictionService
 type PredictionResult = PredictionResponse;
@@ -72,17 +80,24 @@ class MapErrorBoundary extends React.Component<
   }
 }
 
-// Component to handle map click events
-const MapClickHandler: React.FC<{
-  onMapClick: (e: any) => void;
-}> = ({ onMapClick }) => {
-  // Import useMapEvents dynamically to avoid SSR issues
-  const { useMapEvents } = require('react-leaflet');
-  useMapEvents({
-    click: onMapClick,
-  });
-  return null;
-};
+// Component to handle map click events - dynamically imported
+const MapClickHandler = dynamic(
+  () => import('react-leaflet').then(mod => {
+    const ClickHandler = () => {
+      mod.useMapEvents({
+        click: (e: LeafletMouseEvent) => {
+          // This will be passed from parent
+          if (window.mapClickHandler) {
+            window.mapClickHandler(e);
+          }
+        }
+      });
+      return null;
+    };
+    return ClickHandler;
+  }),
+  { ssr: false }
+);
 
 // Custom marker component to avoid icon issues
 const CustomMarker: React.FC<{
@@ -90,13 +105,24 @@ const CustomMarker: React.FC<{
   children: React.ReactNode;
   riskLevel?: string;
   autoOpen?: boolean;
-  onRef?: (ref: any) => void;
+  onRef?: (ref: LeafletMarker | null) => void;
 }> = ({ position, children, riskLevel = 'medium', autoOpen = false, onRef }) => {
-  const { Marker } = require('react-leaflet');
-  const markerRef = React.useRef<any>(null);
+  const [Marker, setMarker] = React.useState<React.ComponentType<Record<string, unknown>> | null>(null);
+  const [L, setL] = React.useState<typeof import('leaflet') | null>(null);
   
-  // Dynamically import Leaflet only when needed
-  const L = require('leaflet');
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      Promise.all([
+        import('react-leaflet').then(mod => mod.Marker),
+        import('leaflet').then(mod => mod.default)
+      ]).then(([MarkerComponent, Leaflet]) => {
+        setMarker(MarkerComponent as unknown as React.ComponentType<Record<string, unknown>>);
+        setL(Leaflet);
+      });
+    }
+  }, []);
+  
+  const markerRef = React.useRef<LeafletMarker | null>(null);
   
   // Get risk color based on risk level
   const getRiskColor = (risk: string) => {
@@ -109,19 +135,19 @@ const CustomMarker: React.FC<{
   };
   
   // Create a custom icon using a simple div with risk-based color
-  const customIcon = L.divIcon({
+  const customIcon = L ? L.divIcon({
     className: 'custom-marker',
     html: `<div style="background-color: ${getRiskColor(riskLevel)}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
     iconSize: [20, 20],
     iconAnchor: [10, 10],
-  });
+  }) : null;
 
   // Auto-open popup when marker is ready and autoOpen is true
   React.useEffect(() => {
     if (autoOpen && markerRef.current) {
       setTimeout(() => {
         try {
-          markerRef.current.openPopup();
+          markerRef.current?.openPopup();
           console.log('Auto-opening prediction popup');
         } catch (error) {
           console.log('Error opening popup:', error);
@@ -137,15 +163,15 @@ const CustomMarker: React.FC<{
     }
   }, [onRef]);
 
-  return (
-    <Marker 
-      ref={markerRef}
-      position={position} 
-      icon={customIcon}
-    >
-      {children}
-    </Marker>
-  );
+  if (!Marker || !L) {
+    return null;
+  }
+
+  return React.createElement(Marker, {
+    ref: markerRef,
+    position: position,
+    icon: customIcon
+  } as Record<string, unknown>, children);
 };
 
 const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({ 
@@ -159,7 +185,7 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [markerReady, setMarkerReady] = useState(false);
   const mapRef = React.useRef<HTMLDivElement>(null);
-  const predictionMarkerRef = React.useRef<any>(null);
+  const predictionMarkerRef = React.useRef<LeafletMarker | null>(null);
 
   // Bay of Bengal bounds
   const bayOfBengalBounds = {
@@ -171,47 +197,7 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
 
   const center = [15.0, 90.0]; // Center of Bay of Bengal
 
-  useEffect(() => {
-    // Ensure we're in the browser environment
-    if (typeof window === 'undefined') return;
-    
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      setMounted(true);
-      
-      // Fix Leaflet default marker icons
-      try {
-        // Dynamically import Leaflet only when needed
-        const L = require('leaflet');
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        });
-      } catch (error) {
-        console.warn('Failed to configure Leaflet icons:', error);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Auto-open popup when prediction result is available and marker is ready
-  useEffect(() => {
-    if (predictionResult && markerReady && predictionMarkerRef.current) {
-      setTimeout(() => {
-        try {
-          predictionMarkerRef.current.openPopup();
-          console.log('Auto-opening prediction popup');
-        } catch (error) {
-          console.log('Error opening popup:', error);
-        }
-      }, 100);
-    }
-  }, [predictionResult, markerReady]);
-
-  const handleMapClick = useCallback(async (e: any) => {
+  const handleMapClick = useCallback(async (e: LeafletMouseEvent) => {
     const { lat, lng } = e.latlng;
     
     // Check if user is authenticated
@@ -252,16 +238,59 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [onPredictionComplete, isAuthenticated, openAuthModal]);
+  }, [onPredictionComplete, isAuthenticated, openAuthModal, bayOfBengalBounds.north, bayOfBengalBounds.south, bayOfBengalBounds.east, bayOfBengalBounds.west]);
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'high': return '#ef4444'; // red
-      case 'medium': return '#f59e0b'; // amber
-      case 'low': return '#10b981'; // emerald
-      default: return '#6b7280';
+  useEffect(() => {
+    // Ensure we're in the browser environment
+    if (typeof window === 'undefined') return;
+    
+    // Set the global map click handler
+    window.mapClickHandler = handleMapClick;
+    
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      setMounted(true);
+      
+      // Fix Leaflet default marker icons
+      try {
+        // Dynamically import Leaflet only when needed
+        import('leaflet').then((L) => {
+          delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          });
+        }).catch((error) => {
+          console.warn('Failed to configure Leaflet icons:', error);
+        });
+      } catch (error) {
+        console.warn('Failed to configure Leaflet icons:', error);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      // Clean up the global handler
+      if (window.mapClickHandler === handleMapClick) {
+        delete window.mapClickHandler;
+      }
+    };
+  }, [handleMapClick]);
+
+  // Auto-open popup when prediction result is available and marker is ready
+  useEffect(() => {
+    if (predictionResult && markerReady && predictionMarkerRef.current) {
+      setTimeout(() => {
+        try {
+          predictionMarkerRef.current?.openPopup();
+          console.log('Auto-opening prediction popup');
+        } catch (error) {
+          console.log('Error opening popup:', error);
+        }
+      }, 100);
     }
-  };
+  }, [predictionResult, markerReady]);
 
   const getRiskLabel = (risk: string) => {
     switch (risk) {
@@ -329,7 +358,7 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
-        <MapClickHandler onMapClick={handleMapClick} />
+        <MapClickHandler />
 
         {/* Selected location marker */}
         {selectedLocation && (
