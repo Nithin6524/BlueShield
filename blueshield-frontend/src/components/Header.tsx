@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { NAVIGATION_ITEMS } from '@/constants/data';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { isProtectedRoute } from '@/utils/auth';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,14 +44,19 @@ const Header: React.FC = () => {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-lg"
-          : "bg-transparent"
+          : "bg-ocean-deep"
       )}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+            >
               <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 bg-ocean-secondary"
 >
                 <span className="text-white font-bold text-lg">B</span>
@@ -61,25 +68,56 @@ const Header: React.FC = () => {
               )}>
                 BlueShield
               </span>
-            </div>
+            </button>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {NAVIGATION_ITEMS.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "transition-colors duration-200 font-medium",
-                  isScrolled 
-                    ? "text-text-secondary hover:text-ocean-primary" 
-                    : "text-white/80 hover:text-white"
-                )}
-              >
-                {item.name}
-              </a>
-            ))}
+            {NAVIGATION_ITEMS.map((item) => {
+              const isRouteProtected = isProtectedRoute(item.href);
+              const isPageRoute = item.href.startsWith('/');
+              
+              const handleClick = (e: React.MouseEvent) => {
+                if (isRouteProtected && !isAuthenticated) {
+                  e.preventDefault();
+                  openAuthModal(item.href);
+                }
+              };
+
+              if (isPageRoute) {
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={handleClick}
+                    className={cn(
+                      "transition-colors duration-200 font-medium",
+                      isScrolled 
+                        ? "text-text-secondary hover:text-ocean-primary" 
+                        : "text-white/80 hover:text-white"
+                    )}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              }
+
+              return (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  onClick={handleClick}
+                  className={cn(
+                    "transition-colors duration-200 font-medium",
+                    isScrolled 
+                      ? "text-text-secondary hover:text-ocean-primary" 
+                      : "text-white/80 hover:text-white"
+                  )}
+                >
+                  {item.name}
+                </a>
+              );
+            })}
           </nav>
 
           {/* Desktop CTA Buttons / User Menu */}
@@ -130,7 +168,7 @@ const Header: React.FC = () => {
                 <Button 
                   variant="secondary"
                   size="sm"
-                  onClick={openAuthModal}
+                  onClick={() => openAuthModal()}
                   className={cn(
                     isScrolled ? "" : "border-white/30 text-white hover:bg-white hover:text-ocean-primary"
                   )}
@@ -140,7 +178,7 @@ const Header: React.FC = () => {
                 <Button 
                   variant="secondary"
                   size="sm"
-                  onClick={openAuthModal}
+                  onClick={() => openAuthModal()}
                   className={cn(
                     isScrolled ? "" : "bg-white/20 text-white hover:bg-white hover:text-ocean-primary"
                   )}
@@ -192,16 +230,44 @@ const Header: React.FC = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white/95 backdrop-blur-md rounded-lg mt-2 shadow-lg">
-              {NAVIGATION_ITEMS.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="block px-3 py-2 text-text-secondary hover:text-ocean-primary transition-colors duration-200 font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </a>
-              ))}
+              {NAVIGATION_ITEMS.map((item) => {
+                const isRouteProtected = isProtectedRoute(item.href);
+                const isPageRoute = item.href.startsWith('/');
+                
+                const handleClick = (e: React.MouseEvent) => {
+                  if (isRouteProtected && !isAuthenticated) {
+                    e.preventDefault();
+                    openAuthModal(item.href);
+                    setIsMobileMenuOpen(false);
+                  } else {
+                    setIsMobileMenuOpen(false);
+                  }
+                };
+
+                if (isPageRoute) {
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={handleClick}
+                      className="block px-3 py-2 text-text-secondary hover:text-ocean-primary transition-colors duration-200 font-medium"
+                    >
+                      {item.name}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={handleClick}
+                    className="block px-3 py-2 text-text-secondary hover:text-ocean-primary transition-colors duration-200 font-medium"
+                  >
+                    {item.name}
+                  </a>
+                );
+              })}
               <div className="pt-4 space-y-2">
                 {isAuthenticated ? (
                   <div className="space-y-3">

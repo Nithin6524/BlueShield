@@ -96,7 +96,7 @@ export const CASE_STUDIES = [
 export const NAVIGATION_ITEMS = [
   { name: "About", href: "#about" },
   { name: "Impact", href: "#ocean-pollution-impact" },
-  { name: "Predictions", href: "#predictions" },
+  { name: "Predictions", href: "/predictions" },
   { name: "Contact", href: "#contact" }
 ];
 

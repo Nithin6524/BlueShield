@@ -5,7 +5,7 @@ import { authService, UserResponse } from '@/services/authService';
 
 interface AuthContextType {
   isAuthModalOpen: boolean;
-  openAuthModal: () => void;
+  openAuthModal: (redirectUrl?: string) => void;
   closeAuthModal: () => void;
   user: UserResponse | null;
   isAuthenticated: boolean;
@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  redirectUrl: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,9 +34,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
-  const closeAuthModal = () => setIsAuthModalOpen(false);
+  const openAuthModal = (redirectUrl?: string) => {
+    setRedirectUrl(redirectUrl || null);
+    setIsAuthModalOpen(true);
+  };
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    setRedirectUrl(null);
+  };
 
   const isAuthenticated = !!user;
 
@@ -66,6 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authService.getCurrentUser();
       setUser(userData);
       closeAuthModal();
+      
+      // Redirect to the intended URL if available
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
     } catch (error) {
       throw error;
     }
@@ -102,6 +115,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    redirectUrl,
   };
 
   return (
