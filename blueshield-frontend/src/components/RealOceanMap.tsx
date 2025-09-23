@@ -227,7 +227,6 @@ const RealOceanMap: React.FC = () => {
        {/* Map Title */}
        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg z-10">
          <div className="text-sm font-bold text-gray-800">Global Microplastic Prediction Map</div>
-         <div className="text-xs text-gray-600">Real-time ocean data visualization</div>
        </div>
     </div>
   );

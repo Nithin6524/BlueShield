@@ -1,4 +1,4 @@
-// Marine Life Impact Statistics
+// Marine Ecosystem Impact Statistics
 export const MARINE_IMPACT_STATS = [
   {
     number: "100M",
@@ -42,18 +42,18 @@ export const OCEAN_POLLUTION_DATA = [
   }
 ];
 
-// Health Impact Statistics
+// Human Health Impact Statistics
 export const HEALTH_IMPACT_STATS = [
   {
-    number: "83%",
-    label: "Tap Water Samples",
+    number: "90%",
+    label: "Seafood Samples",
     description: "Contain microplastics",
     color: "text-coral"
   },
   {
     number: "5g",
     label: "Plastic Ingested",
-    description: "Weekly by humans",
+    description: "Weekly through seafood",
     color: "text-ocean-primary"
   },
   {
@@ -102,22 +102,19 @@ export const NAVIGATION_ITEMS = [
 
 // Hero Section Content
 export const HERO_CONTENT = {
-  title: "Protecting Our Oceans",
-  subtitle: "Advanced microplastic prediction and risk assessment for marine conservation",
-  description: "We use cutting-edge AI and historical data to predict microplastic concentrations, assess marine life risks, and provide actionable insights for ocean protection.",
-  cta: {
-    primary: "Explore Predictions",
-    secondary: "Learn More"
-  }
+  title: "BlueShield",
+  subtitle: "Integrated framework for prediction of microplastics and assessment of human health and marine ecosystem risks",
+  description: "We use cutting-edge AI and historical data to predict microplastic concentrations in oceans and seas, assess risks to human health through seafood consumption and marine ecosystem health, providing actionable insights for protection.",
 };
 
 // About Section Content
 export const ABOUT_CONTENT = {
   title: "About BlueShield",
-  description: "BlueShield is an integrated framework combining machine learning, LSTM time-series models, and environmental data to predict microplastic pollution and assess human health risks. Our mission is to provide accurate, real-time insights that empower communities, researchers, and policymakers to take action against ocean plastic pollution.",
+  description: "BlueShield is an integrated framework for prediction of microplastics and assessment of human health and marine ecosystem risks. Our mission is to provide accurate, real-time insights that empower communities, researchers, and policymakers to take action against ocean plastic pollution.",
   features: [
-    "LSTM-based microplastic concentration predictions",
-    "AI-powered marine life risk assessment",
+    "LSTM-based microplastic concentration predictions in oceans and seas",
+    "Human health risk assessment through seafood consumption",
+    "Marine ecosystem impact evaluation",
     "Interactive ocean mapping and visualization",
     "Personalized health risk evaluation via chatbot",
     "Mathematical modeling for seafood exposure estimation",

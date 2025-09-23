@@ -34,13 +34,13 @@ const HeroSection: React.FC = () => {
      
 
       {/* Hero Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 text-center">
         <div
           className={`transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
-           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+           <h1 className="text-4xl md:text-4xl lg:text-6xl font-semibold text-white my-8 leading-tight">
              {HERO_CONTENT.title}
            </h1>
            
@@ -48,19 +48,9 @@ const HeroSection: React.FC = () => {
              {HERO_CONTENT.subtitle}
            </p>
           
-          <p className="text-lg md:text-xl text-text-secondary mb-8 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
             {HERO_CONTENT.description}
           </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button variant="secondary" size="lg" className="text-lg px-8 py-4">
-              {HERO_CONTENT.cta.primary}
-            </Button>
-            <Button variant="secondary" size="lg" className="text-lg px-8 py-4">
-              {HERO_CONTENT.cta.secondary}
-            </Button>
-          </div>
 
           {/* Statistics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">

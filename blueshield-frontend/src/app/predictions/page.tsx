@@ -38,7 +38,7 @@ const PredictionsPage: React.FC = () => {
     <AuthGuard>
       <main className="min-h-screen">
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 pt-16">
-          <div className="container mx-auto px-4 py-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -46,7 +46,7 @@ const PredictionsPage: React.FC = () => {
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Click anywhere on the Bay of Bengal map to predict microplastic concentration 
-            at that location. Our AI model analyzes oceanographic data to provide accurate predictions.
+            at that location.
           </p>
         </div>
 
@@ -64,30 +64,6 @@ const PredictionsPage: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Instructions */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">How to Use</h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                    1
-                  </div>
-                  <div>Click anywhere on the Bay of Bengal map</div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                    2
-                  </div>
-                  <div>Wait for the AI model to analyze the location</div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                    3
-                  </div>
-                  <div>View the predicted microplastic concentration and risk level</div>
-                </div>
-              </div>
-            </div>
 
             {/* Prediction History */}
             {predictionHistory.length > 0 && (
@@ -144,24 +120,6 @@ const PredictionsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Model Info */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">About the Model</h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div>
-                  <div className="font-medium text-gray-800 mb-1">Data Sources</div>
-                  <div>Oceanographic data, satellite imagery, and historical microplastic measurements</div>
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800 mb-1">Model Type</div>
-                  <div>LSTM neural network trained on Bay of Bengal region data</div>
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800 mb-1">Accuracy</div>
-                  <div>~85% accuracy in concentration prediction</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
           </div>

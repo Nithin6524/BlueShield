@@ -20,7 +20,6 @@ const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapCo
 });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
-const CircleMarker = dynamic(() => import('react-leaflet').then(mod => mod.CircleMarker), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 
 // Use the imported type from predictionService
@@ -89,22 +88,61 @@ const MapClickHandler: React.FC<{
 const CustomMarker: React.FC<{
   position: [number, number];
   children: React.ReactNode;
-}> = ({ position, children }) => {
+  riskLevel?: string;
+  autoOpen?: boolean;
+  onRef?: (ref: any) => void;
+}> = ({ position, children, riskLevel = 'medium', autoOpen = false, onRef }) => {
   const { Marker } = require('react-leaflet');
+  const markerRef = React.useRef<any>(null);
   
   // Dynamically import Leaflet only when needed
   const L = require('leaflet');
   
-  // Create a custom icon using a simple div
+  // Get risk color based on risk level
+  const getRiskColor = (risk: string) => {
+    switch (risk) {
+      case 'high': return '#ef4444'; // red
+      case 'medium': return '#f59e0b'; // amber
+      case 'low': return '#10b981'; // emerald
+      default: return '#6b7280';
+    }
+  };
+  
+  // Create a custom icon using a simple div with risk-based color
   const customIcon = L.divIcon({
     className: 'custom-marker',
-    html: '<div style="background-color: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+    html: `<div style="background-color: ${getRiskColor(riskLevel)}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
     iconSize: [20, 20],
     iconAnchor: [10, 10],
   });
 
+  // Auto-open popup when marker is ready and autoOpen is true
+  React.useEffect(() => {
+    if (autoOpen && markerRef.current) {
+      setTimeout(() => {
+        try {
+          markerRef.current.openPopup();
+          console.log('Auto-opening prediction popup');
+        } catch (error) {
+          console.log('Error opening popup:', error);
+        }
+      }, 100);
+    }
+  }, [autoOpen]);
+
+  // Pass ref to parent component
+  React.useEffect(() => {
+    if (onRef && markerRef.current) {
+      onRef(markerRef.current);
+    }
+  }, [onRef]);
+
   return (
-    <Marker position={position} icon={customIcon}>
+    <Marker 
+      ref={markerRef}
+      position={position} 
+      icon={customIcon}
+    >
       {children}
     </Marker>
   );
@@ -119,6 +157,7 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
   const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [markerReady, setMarkerReady] = useState(false);
   const mapRef = React.useRef<HTMLDivElement>(null);
   const predictionMarkerRef = React.useRef<any>(null);
 
@@ -158,18 +197,19 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-open popup when prediction result is available
+  // Auto-open popup when prediction result is available and marker is ready
   useEffect(() => {
-    if (predictionResult && predictionMarkerRef.current) {
-      // Small delay to ensure the marker is rendered
+    if (predictionResult && markerReady && predictionMarkerRef.current) {
       setTimeout(() => {
-        if (predictionMarkerRef.current && predictionMarkerRef.current.openPopup) {
+        try {
           predictionMarkerRef.current.openPopup();
           console.log('Auto-opening prediction popup');
+        } catch (error) {
+          console.log('Error opening popup:', error);
         }
       }, 100);
     }
-  }, [predictionResult]);
+  }, [predictionResult, markerReady]);
 
   const handleMapClick = useCallback(async (e: any) => {
     const { lat, lng } = e.latlng;
@@ -192,6 +232,7 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
     setError(null);
     setIsLoading(true);
     setPredictionResult(null);
+    setMarkerReady(false);
 
     try {
       console.log('Making prediction request for:', { lat, lng });
@@ -292,7 +333,10 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
 
         {/* Selected location marker */}
         {selectedLocation && (
-          <CustomMarker position={[selectedLocation.lat, selectedLocation.lng]}>
+          <CustomMarker 
+            position={[selectedLocation.lat, selectedLocation.lng]}
+            riskLevel={predictionResult?.risk_level || 'medium'}
+          >
             <Popup>
               <div className="p-2">
                 <h3 className="font-bold text-lg text-gray-800 mb-2">Selected Location</h3>
@@ -307,116 +351,111 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
 
         {/* Prediction result marker */}
         {predictionResult && (
-          <CircleMarker
-            ref={predictionMarkerRef}
-            center={[predictionResult.location.lat, predictionResult.location.lng]}
-            radius={12}
-            pathOptions={{
-              fillColor: getRiskColor(predictionResult.risk_level),
-              color: '#ffffff',
-              weight: 3,
-              opacity: 1,
-              fillOpacity: 0.8
-            }}
-            eventHandlers={{
-              click: () => {
-                console.log('Prediction marker clicked, opening popup');
+          <CustomMarker 
+            position={[predictionResult.location.lat, predictionResult.location.lng]}
+            riskLevel={predictionResult.risk_level}
+            autoOpen={true}
+            onRef={(ref) => {
+              predictionMarkerRef.current = ref;
+              console.log('Marker ref set:', ref);
+              if (ref) {
+                setMarkerReady(true);
               }
             }}
           >
-             <Popup>
-               <div className="p-4 min-w-[320px] max-w-[400px]">
-                 <h3 className="font-bold text-lg text-gray-800 mb-3">Microplastic Prediction</h3>
-                 
-                 {/* Main prediction data */}
-                 <div className="space-y-2 text-sm mb-4">
-                   <div className="flex justify-between">
-                     <span className="font-medium">Concentration:</span>
-                     <span className="font-bold text-blue-600">
-                       {predictionResult.concentration.toFixed(2)} mg/L
-                     </span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="font-medium">Risk Level:</span>
-                     <span className={cn(
-                       "font-bold",
-                       predictionResult.risk_level === 'high' ? 'text-red-600' : 
-                       predictionResult.risk_level === 'medium' ? 'text-amber-600' : 'text-green-600'
-                     )}>
-                       {getRiskLabel(predictionResult.risk_level)}
-                     </span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="font-medium">Confidence:</span>
-                     <span className="font-bold text-gray-600">
-                       {(predictionResult.confidence * 100).toFixed(1)}%
-                     </span>
-                   </div>
-                 </div>
+            <Popup>
+              <div className="p-4 min-w-[320px] max-w-[400px]">
+                <h3 className="font-bold text-lg text-gray-800 mb-3">Microplastic Prediction</h3>
+                
+                {/* Main prediction data */}
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Concentration:</span>
+                    <span className="font-bold text-blue-600">
+                      {predictionResult.concentration.toFixed(2)} mg/L
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Risk Level:</span>
+                    <span className={cn(
+                      "font-bold",
+                      predictionResult.risk_level === 'high' ? 'text-red-600' : 
+                      predictionResult.risk_level === 'medium' ? 'text-amber-600' : 'text-green-600'
+                    )}>
+                      {getRiskLabel(predictionResult.risk_level)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Confidence:</span>
+                    <span className="font-bold text-gray-600">
+                      {(predictionResult.confidence * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
 
-                 {/* Risk description */}
-                 {predictionResult.risk_description && (
-                   <div className="mb-3 p-2 bg-gray-50 rounded-lg">
-                     <p className="text-xs text-gray-700">{predictionResult.risk_description}</p>
-                   </div>
-                 )}
+                {/* Risk description */}
+                {predictionResult.risk_description && (
+                  <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-700">{predictionResult.risk_description}</p>
+                  </div>
+                )}
 
-                 {/* Additional details */}
-                 <div className="space-y-1 text-xs text-gray-600 mb-3">
-                   {predictionResult.region_factor && (
-                     <div className="flex justify-between">
-                       <span>Region:</span>
-                       <span className="font-medium capitalize">{predictionResult.region_factor.replace('_', ' ')}</span>
-                     </div>
-                   )}
-                   {predictionResult.distance_from_major_rivers_km && (
-                     <div className="flex justify-between">
-                       <span>Distance from rivers:</span>
-                       <span className="font-medium">{predictionResult.distance_from_major_rivers_km} km</span>
-                     </div>
-                   )}
-                   {predictionResult.seasonal_factor && (
-                     <div className="flex justify-between">
-                       <span>Seasonal factor:</span>
-                       <span className="font-medium">{predictionResult.seasonal_factor}x</span>
-                     </div>
-                   )}
-                   {predictionResult.prediction_uncertainty && (
-                     <div className="flex justify-between">
-                       <span>Uncertainty:</span>
-                       <span className="font-medium">±{(predictionResult.prediction_uncertainty * 100).toFixed(1)}%</span>
-                     </div>
-                   )}
-                 </div>
+                {/* Additional details */}
+                <div className="space-y-1 text-xs text-gray-600 mb-3">
+                  {predictionResult.region_factor && (
+                    <div className="flex justify-between">
+                      <span>Region:</span>
+                      <span className="font-medium capitalize">{predictionResult.region_factor.replace('_', ' ')}</span>
+                    </div>
+                  )}
+                  {predictionResult.distance_from_major_rivers_km && (
+                    <div className="flex justify-between">
+                      <span>Distance from rivers:</span>
+                      <span className="font-medium">{predictionResult.distance_from_major_rivers_km} km</span>
+                    </div>
+                  )}
+                  {predictionResult.seasonal_factor && (
+                    <div className="flex justify-between">
+                      <span>Seasonal factor:</span>
+                      <span className="font-medium">{predictionResult.seasonal_factor}x</span>
+                    </div>
+                  )}
+                  {predictionResult.prediction_uncertainty && (
+                    <div className="flex justify-between">
+                      <span>Uncertainty:</span>
+                      <span className="font-medium">±{(predictionResult.prediction_uncertainty * 100).toFixed(1)}%</span>
+                    </div>
+                  )}
+                </div>
 
-                 {/* Data sources */}
-                 {predictionResult.data_sources && predictionResult.data_sources.length > 0 && (
-                   <div className="mb-3">
-                     <div className="text-xs font-medium text-gray-700 mb-1">Data Sources:</div>
-                     <div className="flex flex-wrap gap-1">
-                       {predictionResult.data_sources.map((source, index) => (
-                         <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                           {source.replace('_', ' ')}
-                         </span>
-                       ))}
-                     </div>
-                   </div>
-                 )}
+                {/* Data sources */}
+                {predictionResult.data_sources && predictionResult.data_sources.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Data Sources:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {predictionResult.data_sources.map((source, index) => (
+                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          {source.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                 {/* Model info */}
-                 {predictionResult.model_version && (
-                   <div className="text-xs text-gray-500 mb-2">
-                     Model: {predictionResult.model_version}
-                   </div>
-                 )}
+                {/* Model info */}
+                {predictionResult.model_version && (
+                  <div className="text-xs text-gray-500 mb-2">
+                    Model: {predictionResult.model_version}
+                  </div>
+                )}
 
-                 {/* Timestamp */}
-                 <div className="text-xs text-gray-500 border-t pt-2">
-                   Predicted at: {new Date(predictionResult.timestamp).toLocaleString()}
-                 </div>
-               </div>
-             </Popup>
-          </CircleMarker>
+                {/* Timestamp */}
+                <div className="text-xs text-gray-500 border-t pt-2">
+                  Predicted at: {new Date(predictionResult.timestamp).toLocaleString()}
+                </div>
+              </div>
+            </Popup>
+          </CustomMarker>
         )}
       </MapContainer>
 
