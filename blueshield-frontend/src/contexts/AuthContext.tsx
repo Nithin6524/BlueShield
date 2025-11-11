@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { authService, UserResponse } from '@/services/authService';
 
 interface AuthContextType {
@@ -35,14 +36,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   const openAuthModal = (redirectUrl?: string) => {
-    setRedirectUrl(redirectUrl || null);
     setIsAuthModalOpen(true);
+    setRedirectUrl(redirectUrl || null);
   };
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
     setRedirectUrl(null);
+    router.push('/');
   };
 
   const isAuthenticated = !!user;
@@ -77,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Redirect to the intended URL if available
       if (redirectUrl) {
-        window.location.href = redirectUrl;
+        router.push(redirectUrl);
       }
     } catch (error) {
       throw error;
@@ -102,6 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null);
       authService.clearTokens();
+      router.push('/');
     }
   };
 

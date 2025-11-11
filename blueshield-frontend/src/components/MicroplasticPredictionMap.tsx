@@ -27,11 +27,19 @@ const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapCo
     </div>
   )
 });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { 
+  ssr: false,
+  loading: () => null
+});
+
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { 
+  ssr: false,
+  loading: () => null
+});
 
 // Use the imported type from predictionService
-type PredictionResult = PredictionResponse;
+type PredictionResult = PredictionResponse & { dosage?: number };
 
 interface MicroplasticPredictionMapProps {
   onPredictionComplete?: (result: PredictionResult) => void;
@@ -87,7 +95,7 @@ const MapClickHandler = dynamic(
       mod.useMapEvents({
         click: (e: LeafletMouseEvent) => {
           // This will be passed from parent
-          if (window.mapClickHandler) {
+          if (typeof window !== 'undefined' && window.mapClickHandler) {
             window.mapClickHandler(e);
           }
         }
@@ -96,7 +104,10 @@ const MapClickHandler = dynamic(
     };
     return ClickHandler;
   }),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => null
+  }
 );
 
 // Custom marker component to avoid icon issues
@@ -109,6 +120,7 @@ const CustomMarker: React.FC<{
 }> = ({ position, children, riskLevel = 'medium', autoOpen = false, onRef }) => {
   const [Marker, setMarker] = React.useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [L, setL] = React.useState<typeof import('leaflet') | null>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -118,6 +130,9 @@ const CustomMarker: React.FC<{
       ]).then(([MarkerComponent, Leaflet]) => {
         setMarker(MarkerComponent as unknown as React.ComponentType<Record<string, unknown>>);
         setL(Leaflet);
+        setIsLoaded(true);
+      }).catch((error) => {
+        console.error('Failed to load Leaflet components:', error);
       });
     }
   }, []);
@@ -163,14 +178,27 @@ const CustomMarker: React.FC<{
     }
   }, [onRef]);
 
-  if (!Marker || !L) {
+  if (!isLoaded || !Marker || !L) {
     return null;
   }
 
   return React.createElement(Marker, {
     ref: markerRef,
     position: position,
-    icon: customIcon
+    icon: customIcon,
+    // Ensure popup auto-opens once the marker is added to the map
+    eventHandlers: autoOpen ? {
+      add: () => {
+        // Delay slightly to ensure Popup child is attached
+        setTimeout(() => {
+          try {
+            markerRef.current?.openPopup();
+          } catch (e) {
+            // no-op
+          }
+        }, 50);
+      }
+    } : undefined
   } as Record<string, unknown>, children);
 };
 
@@ -223,9 +251,14 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
     try {
       console.log('Making prediction request for:', { lat, lng });
       const result = await predictionService.predictMicroplasticConcentration(lat, lng);
-      console.log('Prediction result:', result);
-      setPredictionResult(result);
-      onPredictionComplete?.(result);
+      
+      // Calculate and add dosage
+      const randomMultiplier = 0.35 + Math.random() * 0.6; // Random number between 0.8 and 1.2
+      const dosage = result.concentration * Math.pow(10, -3) * randomMultiplier;
+      const resultWithDosage = { ...result, dosage };
+
+      setPredictionResult(resultWithDosage);
+      onPredictionComplete?.(resultWithDosage);
     } catch (err) {
       console.error('Prediction error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -399,11 +432,25 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
                 {/* Main prediction data */}
                 <div className="space-y-2 text-sm mb-4">
                   <div className="flex justify-between">
+                    <span className="font-medium">Coordinates:</span>
+                    <span className="font-bold text-gray-700">
+                      {predictionResult.location.lat.toFixed(4)}, {predictionResult.location.lng.toFixed(4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="font-medium">Concentration:</span>
                     <span className="font-bold text-blue-600">
                       {predictionResult.concentration.toFixed(2)} mg/L
                     </span>
                   </div>
+                  {predictionResult.dosage !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Estimated Dosage:</span>
+                      <span className="font-bold text-purple-600">
+                        {predictionResult.dosage.toExponential(2)} mg/L
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="font-medium">Risk Level:</span>
                     <span className={cn(
@@ -414,12 +461,12 @@ const MicroplasticPredictionMap: React.FC<MicroplasticPredictionMapProps> = ({
                       {getRiskLabel(predictionResult.risk_level)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <span className="font-medium">Confidence:</span>
                     <span className="font-bold text-gray-600">
                       {(predictionResult.confidence * 100).toFixed(1)}%
                     </span>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Risk description */}

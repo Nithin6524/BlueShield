@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import timedelta
+from datetime import datetime, timezone
 from app.models.user import User
 from app.schemas.auth import UserLogin, UserRegister, Token, PasswordChange, TokenRefresh
 from app.schemas.user import UserResponse
@@ -8,6 +8,7 @@ from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
+
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserRegister):
     """Register a new user"""
@@ -15,18 +16,18 @@ async def register(user_data: UserRegister):
     existing_user = await User.find_one(User.email == user_data.email)
     if existing_user:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Check if username is taken
     existing_username = await User.find_one(User.username == user_data.username)
     if existing_username:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already taken"
         )
-    
+
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     db_user = User(
@@ -35,7 +36,7 @@ async def register(user_data: UserRegister):
         hashed_password=hashed_password
     )
     await db_user.insert()
-    
+
     return UserResponse(
         id=str(db_user.id),
         email=db_user.email,
@@ -46,6 +47,7 @@ async def register(user_data: UserRegister):
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )
+
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin):
@@ -58,16 +60,15 @@ async def login(user_credentials: UserLogin):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    
+
     # Update last login
-    from datetime import datetime, timezone
     user.last_login = datetime.now(timezone.utc)
     await user.save()
-    
+
     # Create tokens
     tokens = create_tokens(data={"sub": user.email})
     return tokens
+
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(token_data: TokenRefresh):
@@ -79,7 +80,7 @@ async def refresh_token(token_data: TokenRefresh):
             detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Verify user still exists
     user = await User.find_one(User.email == email)
     if not user:
@@ -87,10 +88,11 @@ async def refresh_token(token_data: TokenRefresh):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-    
+
     # Create new tokens
     tokens = create_tokens(data={"sub": user.email})
     return tokens
+
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
@@ -106,13 +108,13 @@ async def get_current_user_profile(current_user: User = Depends(get_current_user
         updated_at=current_user.updated_at
     )
 
+
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_user)):
     """Logout user (client-side token removal)"""
-    # In JWT-based auth, logout is typically handled client-side
-    # by removing the token from storage. The server doesn't need
-    # to do anything special since JWT tokens are stateless.
+    # JWT-based auth is stateless; logout happens client-side
     return {"message": "Logged out successfully"}
+
 
 @router.post("/change-password")
 async def change_password(
@@ -126,9 +128,9 @@ async def change_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect current password"
         )
-    
+
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
     await current_user.save()
-    
+
     return {"message": "Password updated successfully"}

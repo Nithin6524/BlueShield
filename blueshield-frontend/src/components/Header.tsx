@@ -40,12 +40,8 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-lg"
-          : "bg-ocean-deep"
-      )}
+      className=
+        "fixed top-0 left-0 text-white right-0 z-50 transition-all duration-300 bg-transparent backdrop-blur-md "
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         <div className="flex items-center justify-between h-16">
@@ -62,7 +58,7 @@ const Header: React.FC = () => {
               </div>
               <span className={cn(
                 "text-xl font-bold transition-colors duration-300",
-                isScrolled ? "text-text-primary" : "text-white"
+                "text-white"
               )}>
                 BlueShield
               </span>
@@ -70,7 +66,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center gap-18">
             {NAVIGATION_ITEMS.map((item) => {
               const isRouteProtected = isProtectedRoute(item.href);
               const isPageRoute = item.href.startsWith('/');
@@ -90,9 +86,7 @@ const Header: React.FC = () => {
                     onClick={handleClick}
                     className={cn(
                       "transition-colors duration-200 font-medium",
-                      isScrolled 
-                        ? "text-text-secondary hover:text-ocean-primary" 
-                        : "text-white/80 hover:text-white"
+                      "text-white/80 hover:text-white"
                     )}
                   >
                     {item.name}
@@ -107,9 +101,7 @@ const Header: React.FC = () => {
                   onClick={handleClick}
                   className={cn(
                     "transition-colors duration-200 font-medium",
-                    isScrolled 
-                      ? "text-text-secondary hover:text-ocean-primary" 
-                      : "text-white/80 hover:text-white"
+                    "text-white/80 hover:text-white"
                   )}
                 >
                   {item.name}
@@ -126,9 +118,7 @@ const Header: React.FC = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className={cn(
                     "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200",
-                    isScrolled 
-                      ? "bg-gray-100 hover:bg-gray-200 text-gray-900" 
-                      : "bg-white/20 hover:bg-white/30 text-white"
+                    "cursor-pointer text-white"
                   )}
                 >
                   <div className="w-8 h-8 rounded-full bg-ocean-primary flex items-center justify-center">
@@ -144,7 +134,7 @@ const Header: React.FC = () => {
 
                 {/* User Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200  z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900">{user?.username}</p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
@@ -154,7 +144,7 @@ const Header: React.FC = () => {
                         logout();
                         setShowUserMenu(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                      className="w-full cursor-pointer text-left px-4  text-sm text-gray-700 hover:bg-red-500 hover:text-white transition-colors duration-200 rounded-lg py-2"
                     >
                       Sign Out
                     </button>
@@ -173,16 +163,7 @@ const Header: React.FC = () => {
                 >
                   Sign In
                 </Button>
-                <Button 
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => openAuthModal()}
-                  className={cn(
-                    isScrolled ? "" : "bg-white/20 text-white hover:bg-white hover:text-ocean-primary"
-                  )}
-                >
-                  Get Started
-                </Button>
+                
               </>
             )}
           </div>
@@ -193,9 +174,7 @@ const Header: React.FC = () => {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={cn(
                 "transition-colors duration-200",
-                isScrolled 
-                  ? "text-text-primary hover:text-ocean-primary" 
-                  : "text-white hover:text-white/80"
+                "text-white hover:text-white/80"
               )}
             >
               <svg

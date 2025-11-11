@@ -116,6 +116,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   const toggleForm = () => {
+    // Toggle between Sign In and Sign Up
+    // Flips isSignUp and clears form/feedback state
+    // Triggers CSS transforms that slide panels and overlay
     setIsSignUp(!isSignUp);
     setFormData({ username: '', email: '', password: '', confirmPassword: '' });
     setError(null);
@@ -128,14 +131,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md " onClick={onClose}></div>
       
       {/* Modal */}
       <div className="relative w-full max-w-5xl mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden z-[10000] border border-gray-100">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-[10001] w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+          className="absolute top-4 right-4 z-[10001] w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg cursor-pointer"
         >
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -143,6 +146,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </button>
 
         <div className="relative h-[650px] overflow-hidden">
+          {/*
+            Sliding forms container
+            - Two panels sit side-by-side (container width is 200%).
+            - When isSignUp is true, translate -50% to reveal the Sign Up panel.
+          */}
           <div
             className={cn(
               "flex w-[200%] h-full transition-transform duration-500 ease-in-out",
@@ -224,10 +232,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Sign Up Panel */}
-            <div className="w-1/2 flex flex-col justify-center bg-gradient-to-br from-gray-50 to-white px-16">
-              <div className="w-[40%] mr-auto">
+            <div className="w-1/2 h-full flex flex-col justify-center bg-gradient-to-br from-gray-50 to-white px-16">
+              <div className="w-[50%] mr-auto h-full overflow-y-auto pr-16 py-16">
                 <div className="text-center mb-8">
-                  <h2 className="text-4xl font-bold text-gray-900 mb-3">Create Account</h2>
+                  <h2 className="text-3xl w-full font-bold text-gray-900 mb-3">Create Account</h2>
                 </div>
 
                 {/* Error/Success Messages */}
@@ -242,7 +250,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 px-4">
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-gray-700">Username</label>
                     <input
@@ -361,6 +369,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Sliding Overlay */}
+        {/*
+          Sliding overlay panel
+          - Colored overlay covers half the modal (w-1/2) above content.
+          - Moves to the right (translate-x-full) when isSignUp is true.
+        */}
           <div className={cn(
             "absolute top-0 left-0 w-1/2 h-full bg-gradient-to-br from-ocean-primary via-ocean-secondary to-ocean-deep transition-transform duration-500 ease-in-out z-10",
             isSignUp ? "translate-x-full" : "translate-x-0"
@@ -374,11 +387,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
               
               <div className="relative z-10">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
+                
                 
                 <h2 className="text-4xl font-bold mb-4">
                   {isSignUp ? "Welcome Back!" : "Hello, Friend!"}

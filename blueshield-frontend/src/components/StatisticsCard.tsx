@@ -44,17 +44,17 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
     <div
       ref={numberRef}
       className={cn(
-        "text-center p-6 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-700 transform",
+        "flex flex-col items-center justify-center p-6 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-700 transform",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
     >
       <div className={cn("text-4xl font-bold mb-2", color)}>
         {number}
       </div>
-      <div className="text-lg font-semibold text-gray-300 mb-1">
+      <div className="text-lg font-semibold text-white mb-1">
         {label}
       </div>
-      <div className="text-sm text-gray-400">
+      <div className="text-sm text-white/80">
         {description}
       </div>
     </div>

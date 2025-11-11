@@ -5,34 +5,49 @@ from passlib.context import CryptContext
 from app.config.settings import settings
 import re
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - Fixed for bcrypt compatibility
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12,  # Explicitly set rounds
+    bcrypt__ident="2b"  # Use 2b variant which is more stable
+)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
+    # Truncate password to 72 bytes if needed (bcrypt limitation)
+    plain_password = plain_password[:72]
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
+    # Truncate password to 72 bytes if needed (bcrypt limitation)
+    password = password[:72]
     return pwd_context.hash(password)
 
 def validate_password_strength(password: str) -> Dict[str, Any]:
     """Validate password strength"""
     errors = []
     
+    # Check against first 72 characters (bcrypt limit)
+    effective_password = password[:72]
+    
     if len(password) < settings.min_password_length:
         errors.append(f"Password must be at least {settings.min_password_length} characters long")
     
-    if not re.search(r"[A-Z]", password):
+    if len(password) > 72:
+        errors.append("Password cannot exceed 72 characters (bcrypt limitation)")
+    
+    if not re.search(r"[A-Z]", effective_password):
         errors.append("Password must contain at least one uppercase letter")
     
-    if not re.search(r"[a-z]", password):
+    if not re.search(r"[a-z]", effective_password):
         errors.append("Password must contain at least one lowercase letter")
     
-    if not re.search(r"\d", password):
+    if not re.search(r"\d", effective_password):
         errors.append("Password must contain at least one digit")
     
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", effective_password):
         errors.append("Password must contain at least one special character")
     
     return {

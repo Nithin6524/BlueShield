@@ -38,7 +38,7 @@ export default function RootLayout({
   
   return (
     <html lang="en" className={`${poppins.variable}`}>
-      <body className={`${poppins.className} antialiased`}>
+      <body className={`${poppins.className} antialiased bg-ocean-deep text-white`}>
         <AuthProvider>
           <Header />
           <AuthModalWrapper />

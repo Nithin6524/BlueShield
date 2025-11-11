@@ -183,6 +183,9 @@ const RealOceanMap: React.FC = () => {
                 <h3 className="font-bold text-lg text-gray-800 mb-2">{point.label}</h3>
                 <div className="space-y-1 text-sm">
                   <div>
+                    <span className="font-medium">Coordinates:</span> {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
+                  </div>
+                  <div>
                     <span className="font-medium">Concentration:</span> {point.concentration} mg/L
                   </div>
                   <div>

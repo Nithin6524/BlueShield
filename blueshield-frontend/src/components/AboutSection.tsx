@@ -26,7 +26,7 @@ const AboutSection: React.FC = () => {
   }, []);
 
   return (
-    <section id="about" ref={aboutRef} className="pt-20 pb-1 bg-white">
+    <section id="about" ref={aboutRef} className="pt-20 pb-1 bg-ocean-deep">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         {/* About Content */}
         <div
@@ -37,10 +37,10 @@ const AboutSection: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
             {/* Text Content */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                 {ABOUT_CONTENT.title}
               </h2>
-              <p className="text-lg text-text-secondary mb-8 leading-relaxed">
+              <p className="text-lg text-white/80 mb-8 leading-relaxed">
                 {ABOUT_CONTENT.description}
               </p>
               
@@ -48,8 +48,8 @@ const AboutSection: React.FC = () => {
               <ul className="space-y-3 mb-8">
                 {ABOUT_CONTENT.features.map((feature, index) => (
                   <li key={index} className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-ocean-primary rounded-full"></div>
-                    <span className="text-text-secondary">{feature}</span>
+                    <div className="w-2 h-2 bg-ocean-secondary rounded-full"></div>
+                    <span className="text-white/80">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -65,22 +65,22 @@ const AboutSection: React.FC = () => {
 
           {/* Ocean Pollution Statistics */}
           <div id="ocean-pollution-impact" className="mb-20">
-            <h3 className="text-3xl font-bold text-center text-text-primary mb-12">
+            <h3 className="text-3xl font-bold text-center text-white mb-12">
               Ocean Pollution Impact
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-row justify-center items-center gap-20">
               {OCEAN_POLLUTION_DATA.map((stat, index) => (
                 <div
                   key={index}
-                  className="text-center p-6 bg-ocean-surface rounded-xl"
+                  className="text-center w-[20%] p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20"
                 >
                   <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
                     {stat.number}
                   </div>
-                  <div className="text-lg font-semibold text-text-primary mb-1">
+                  <div className="text-lg font-semibold text-white mb-1">
                     {stat.label}
                   </div>
-                  <div className="text-sm text-text-secondary">
+                  <div className="text-sm text-white/80">
                     {stat.description}
                   </div>
                 </div>
@@ -90,29 +90,29 @@ const AboutSection: React.FC = () => {
 
           {/* Human Health Impact Statistics */}
           <div id="human-health-impact" className="mb-20">
-            <h3 className="text-3xl font-bold text-center text-text-primary mb-12">
+            <h3 className="text-3xl font-bold text-center text-white mb-12">
               Human Health Impact
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-row justify-center items-center gap-20">
               {HEALTH_IMPACT_STATS.map((stat, index) => (
                 <div
                   key={index}
-                  className="text-center p-6 bg-gradient-to-br from-coral/10 to-ocean-primary/10 rounded-xl border border-coral/20"
+                  className="text-center w-[20%] p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20"
                 >
                   <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
                     {stat.number}
                   </div>
-                  <div className="text-lg font-semibold text-text-primary mb-1">
+                  <div className="text-lg font-semibold text-white mb-1">
                     {stat.label}
                   </div>
-                  <div className="text-sm text-text-secondary">
+                  <div className="text-sm text-white/80">
                     {stat.description}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-8 text-center">
-              <p className="text-lg text-text-secondary max-w-4xl mx-auto leading-relaxed">
+            <div className="mt-32 text-center">
+              <p className="text-lg text-white/80 max-w-4xl mx-auto leading-relaxed">
                 The consumption of contaminated seafood exposes humans to microplastics and associated toxins, 
                 potentially leading to health issues including inflammation, endocrine disruption, and increased 
                 risk of chronic diseases. Our platform helps assess these risks and provides personalized 

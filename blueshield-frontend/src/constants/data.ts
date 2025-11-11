@@ -25,19 +25,19 @@ export const OCEAN_POLLUTION_DATA = [
   {
     number: "8M",
     label: "Tons of Plastic",
-    description: "Enter oceans yearly",
-    color: "text-ocean-deep"
+    description: "enter oceans yearly",
+    color: "text-gray-300"
   },
   {
     number: "5.25T",
     label: "Plastic Particles",
-    description: "In oceans globally",
+    description: "in oceans globally",
     color: "text-ocean-secondary"
   },
   {
     number: "1 in 3",
     label: "Fish Contaminated",
-    description: "With plastic debris",
+    description: "with plastic debris",
     color: "text-kelp"
   }
 ];
@@ -47,19 +47,19 @@ export const HEALTH_IMPACT_STATS = [
   {
     number: "90%",
     label: "Seafood Samples",
-    description: "Contain microplastics",
+    description: "contain microplastics",
     color: "text-coral"
   },
   {
     number: "5g",
     label: "Plastic Ingested",
-    description: "Weekly through seafood",
-    color: "text-ocean-primary"
+    description: "weekly through seafood",
+    color: "white"
   },
   {
     number: "99%",
     label: "Ocean Plastic",
-    description: "Is microplastics",
+    description: "is microplastics",
     color: "text-seafoam"
   }
 ];
@@ -94,10 +94,11 @@ export const CASE_STUDIES = [
 
 // Navigation Items
 export const NAVIGATION_ITEMS = [
-  { name: "About", href: "#about" },
-  { name: "Impact", href: "#ocean-pollution-impact" },
+  { name: "About", href: "/#about" },
+  { name: "Impact", href: "/#ocean-pollution-impact" },
   { name: "Predictions", href: "/predictions" },
-  { name: "Contact", href: "#contact" }
+  { name: "Account", href: "/account" },
+  { name: "Contact", href: "/#contact" }
 ];
 
 // Hero Section Content
