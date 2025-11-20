@@ -114,7 +114,7 @@ BlueShield-backend/
    ```bash
    cp env.example .env
    # Edit .env with your configuration
-   ```
+   ```   
 
 5. **Run the application**
    ```bash

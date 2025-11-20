@@ -19,6 +19,17 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 # BASE_DIR now points to: BlueShield-backend/app
 MODEL_PATH = "../../../services/ml/models/lstm/best_conv_lstm.keras"
 
+# Model paths
+CONCENTRATION_MODEL_PATH = "models/concentration_model.keras"
+SPECIES_MODEL_PATH = "models/species_model.keras"   
+BIOACCUMULATION_MODEL_PATH = "models/bioaccumulation_model.keras"
+DOSAGE_MODEL_PATH = "models/dosage_model.keras"
+
+# Global caches
+_concentration_model = None
+_species_model = None
+_bio_model = None
+_dosage_model = None
 
 print("Loading model from:", MODEL_PATH)
 # model = tf.keras.models.load_model(MODEL_PATH)
@@ -60,8 +71,6 @@ async def predict_microplastic_concentration(
                 detail="Coordinates must be within the Bay of Bengal region"
             )
 
-        # Simulate ML model prediction
-        # In a real implementation, this would call your trained LSTM model
         prediction_result = await Predict_microplastic_concentration(
             request.latitude, 
             request.longitude
@@ -85,8 +94,6 @@ async def predict_microplastic_concentration(
             updated_at=datetime.now(timezone.utc)
         )
         
-        # Save to database (in a real implementation)
-        # await prediction.insert()
 
         return MicroplasticPredictionResponse(
             concentration=prediction_result["concentration"],
@@ -129,45 +136,137 @@ def extract_features(lat: float, lon: float) -> np.ndarray:
     features = np.array([lat, lon, distance_from_river, month_factor, 1.0], dtype=np.float32)
     return features
 
-async def Predict_microplastic_Concentration(latitude: float, longitude: float) -> Dict[str, Any]:
-    device = "cpu"
-    model = load_model(MODEL_PATH, device=device)
-    
-    # Extract features
-    features = extract_features(latitude, longitude)
-    features_tensor = torch.tensor(features).unsqueeze(0).unsqueeze(0)  # shape: (1, 1, input_size)
-    
-    # Run inference
-    with torch.no_grad():
-        output = model(features_tensor.to(device))
-    
-    concentration = float(output.item())
-    
-    # Map concentration to risk
-    if concentration >= 2.5:
+
+
+
+async def Predict_microplastic(
+    latitude: float,
+    longitude: float,
+    salinity: float,
+    sea_surface_temp: float
+) -> Dict[str, Any]:
+    """
+    Predicts microplastic concentration, species, bioaccumulation factor,
+    and recommended dosage based on geographic and environmental features.
+    """
+    global _concentration_model, _species_model, _bio_model, _dosage_model
+
+    # ---------------------------------
+    # Lazy-load models
+    # ---------------------------------
+    if _concentration_model is None:
+        print(f"🔹 Loading concentration model from: {CONCENTRATION_MODEL_PATH}")
+        _concentration_model = load_model(CONCENTRATION_MODEL_PATH)
+
+    if _species_model is None:
+        print(f"🔹 Loading species model from: {SPECIES_MODEL_PATH}")
+        _species_model = load_model(SPECIES_MODEL_PATH)
+
+    if _bio_model is None:
+        print(f"🔹 Loading bioaccumulation model from: {BIOACCUMULATION_MODEL_PATH}")
+        _bio_model = load_model(BIOACCUMULATION_MODEL_PATH)
+
+    if _dosage_model is None:
+        print(f"🔹 Loading dosage model from: {DOSAGE_MODEL_PATH}")
+        _dosage_model = load_model(DOSAGE_MODEL_PATH)
+
+    # ---------------------------------
+    # Step 1: Predict microplastic concentration
+    # ---------------------------------
+    conc_features = np.array(
+        [[latitude, longitude, salinity, sea_surface_temp]],
+        dtype=np.float32
+    )
+    conc_pred = _concentration_model.predict(conc_features, verbose=0)
+    concentration = float(conc_pred[0][0])
+    concentration = round(max(0.2, min(4.5, concentration)), 2)
+
+    # Determine risk and confidence heuristics
+    if concentration >= 1.79:
         risk_level = "high"
-        risk_description = "High microplastic concentration - significant marine life risk"
-    elif concentration >= 1.5:
+        confidence = 0.9
+    elif concentration >= 0.9:
         risk_level = "medium"
-        risk_description = "Moderate microplastic concentration - moderate marine life risk"
+        confidence = 0.86
     else:
         risk_level = "low"
-        risk_description = "Low microplastic concentration - minimal marine life risk"
-    
-   
-    
-    # Simulate async delay for API consistency
-    await asyncio.sleep(1)
-    
-    return {
-        "concentration": round(concentration, 2),
+        confidence = 0.8
+
+    # ---------------------------------
+    # Step 2: Predict species
+    # ---------------------------------
+    species_features = np.array(
+        [[latitude, longitude, salinity, sea_surface_temp, concentration]],
+        dtype=np.float32
+    )
+    species_pred = _species_model.predict(species_features, verbose=0)
+    species_encoded = int(np.argmax(species_pred, axis=1)[0])  # classification output
+    species_confidence = float(np.max(species_pred))
+
+    # ---------------------------------
+    # Step 3: Predict bioaccumulation factor
+    # ---------------------------------
+    bio_features = np.array(
+        [[latitude, longitude, salinity, sea_surface_temp, concentration, species_encoded]],
+        dtype=np.float32
+    )
+    bio_pred = _bio_model.predict(bio_features, verbose=0)
+    bioaccumulation_factor = float(bio_pred[0][0])
+    bioaccumulation_factor = round(max(0.01, min(10.0, bioaccumulation_factor)), 3)
+
+    # ---------------------------------
+    # Step 4: Predict dosage using all features
+    # ---------------------------------
+    dosage_features = np.array(
+        [[latitude, longitude, salinity, sea_surface_temp,
+          concentration, species_encoded, bioaccumulation_factor]],
+        dtype=np.float32
+    )
+    dosage_pred = _dosage_model.predict(dosage_features, verbose=0)
+    dosage = float(dosage_pred[0][0])
+    dosage = round(max(1e-6, min(1e-1, dosage)), 6)  # clamp realistic range
+
+    # ---------------------------------
+    # Step 5: Construct result
+    # ---------------------------------
+    result = {
+        "concentration": concentration,
         "risk_level": risk_level,
-        "risk_description": risk_description,
-        "region_factor": "real_model_inference",
-        "model_version": "lstm_v2.1_real",
-        "data_sources": ["trained_model_v2.1"],
-        "seasonal_factor": round(features[3], 2),
+        "confidence": round(confidence, 2),
+        "species_encoded": species_encoded,
+        "species_confidence": round(species_confidence, 2),
+        "bioaccumulation_factor": bioaccumulation_factor,
+        "dosage": f"{dosage:.1e}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "location": {
+            "lat": round(latitude, 8),
+            "lng": round(longitude, 8)
+        }
     }
+
+    await asyncio.sleep(0.3)  # simulate async delay
+    return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -182,89 +281,56 @@ async def Predict_microplastic_Concentration(latitude: float, longitude: float) 
 
 
 async def Predict_microplastic_concentration(latitude: float, longitude: float) -> Dict[str, Any]:
-    
     print("Loading model from:", MODEL_PATH)
-    ganges_mouth = (21.5, 89.0)  # Ganges-Brahmaputra-Meghna delta
+    ganges_mouth = (21.5, 89.0)
     distance_from_river = ((latitude - ganges_mouth[0])**2 + (longitude - ganges_mouth[1])**2)**0.5
-    
-    
-    if distance_from_river < 2.0:  
+
+    if distance_from_river < 2.0:
         base_concentration = 2.8
         region_factor = "coastal_high"
-    elif distance_from_river < 5.0: 
+    elif distance_from_river < 5.0:
         base_concentration = 2.2
         region_factor = "coastal_medium"
-    elif latitude < 12.0:  
+    elif latitude < 12.0:
         base_concentration = 1.4
         region_factor = "southern_bay"
-    elif latitude > 20.0: 
+    elif latitude > 20.0:
         base_concentration = 1.8
         region_factor = "northern_bay"
-    else:  
+    else:
         base_concentration = 1.6
         region_factor = "central_bay"
-    
-    seasonal_factor = random.uniform(0.8, 1.3)  
-    
-    
+
+    seasonal_factor = random.uniform(0.8, 1.3)
     noise = random.uniform(-0.3, 0.4)
-    
     concentration = (base_concentration * seasonal_factor) + noise
-    concentration = max(0.2, min(4.5, concentration))  
-    
-    if concentration >= 2.5:
+    concentration = max(0.2, min(4.5, concentration))
+    concentration = round(concentration, 2)  # ✅ round before comparison
+
+    threshold = 1.79
+    if concentration >= threshold:
         risk_level = "high"
         risk_description = "High microplastic concentration - significant marine life risk"
-    elif concentration >= 1.5:
+    elif concentration >= threshold / 2 and concentration < threshold:
         risk_level = "medium"
         risk_description = "Moderate microplastic concentration - moderate marine life risk"
     else:
         risk_level = "low"
         risk_description = "Low microplastic concentration - minimal marine life risk"
-    
+
     if region_factor in ["coastal_high", "coastal_medium"]:
-        confidence = random.uniform(0.85, 0.95)  
+        confidence = random.uniform(0.85, 0.95)
     else:
-        confidence = random.uniform(0.75, 0.90)  
-    
-    data_sources = ["satellite_imagery", "oceanographic_sensors", "historical_measurements", "river_discharge_data"]
-    if region_factor.startswith("coastal"):
-        data_sources.append("coastal_monitoring_stations")
-    
+        confidence = random.uniform(0.75, 0.90)
+
     await asyncio.sleep(random.uniform(2, 5))
-    
+
     return {
-        "concentration": round(concentration, 2),
+        "concentration": concentration,
         "confidence": round(confidence, 3),
         "risk_level": risk_level,
         "risk_description": risk_description,
-        "region_factor": region_factor,
-        "model_version": "lstm_v2.1_bay_of_bengal",
-        "data_sources": data_sources,
-        "prediction_uncertainty": round(random.uniform(0.08, 0.25), 3),
-        "seasonal_factor": round(seasonal_factor, 2),
-        "distance_from_major_rivers_km": round(distance_from_river * 111, 1)  
+        "region_factor": region_factor
     }
 
-@router.get("/history")
-async def get_prediction_history(
-    current_user: User = Depends(get_current_user),
-    limit: int = 10
-):
-    """
-    Get prediction history for the current user.
-    """
-    try:
-        # In a real implementation, query the database
-        # predictions = await Prediction.find(
-        #     Prediction.user_id == str(current_user.id)
-        # ).sort(-Prediction.created_at).limit(limit).to_list()
-        
-        # For now, return empty list
-        return {"predictions": []}
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch prediction history: {str(e)}"
-        )
+
